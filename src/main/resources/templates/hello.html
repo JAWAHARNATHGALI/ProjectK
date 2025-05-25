@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Hello Page</title>
+    <style>
+        /* Basic reset */
+        body, h1, img {
+            margin: 0;
+            padding: 0;
+        }
+
+        /* Background color and overall styling */
+        body {
+            font-family: 'Arial', sans-serif;
+            background: url('/ProjectKImg.jpg') no-repeat center center fixed;
+            background-size: cover;
+            color: white;
+            text-align: center;
+            padding: 50px;
+            position: relative; /* Keep for any future absolute positioning if needed, otherwise could remove */
+            min-height: 100vh; /* Ensure body takes full viewport height */
+            display: flex; /* Use flexbox for main content centering */
+            flex-direction: column;
+            justify-content: space-between; /* Push header/footer to ends */
+        }
+
+        /* Apply blur effect to the background image */
+        body::before {
+            content: "";
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: inherit;
+            filter: blur(8px); /* Blurring effect */
+            z-index: -1;
+        }
+
+        /* Main content container to keep things centered and organized */
+        .main-content {
+            flex-grow: 1; /* Allows content to take available space */
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            /* Removed padding-bottom as admin button is no longer absolutely positioned */
+        }
+
+        /* Heading Style */
+        h1 {
+            font-size: 3.5em;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            margin-bottom: 30px;
+            color: #FFD700; /* Gold */
+            text-shadow: 2px 2px 5px rgba(184, 115, 51, 0.8); /* Subtle copper glow */
+        }
+
+        /* Styling for the image */
+        img {
+            width: 500px; /* Increased image width */
+            height: auto;
+            border-radius: 15px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.2);
+            transition: transform 0.3s ease-in-out;
+            max-width: 90%; /* Responsive adjustment */
+        }
+
+        /* Hover effect for image */
+        img:hover {
+            transform: scale(1.05); /* Slightly reduced scale for better fit with new layout */
+        }
+
+        /* Button container - Adjusted for new button placement */
+        .button-container {
+            margin-top: 30px;
+            display: flex;
+            flex-direction: column; /* Stack buttons vertically */
+            align-items: center;    /* Center buttons horizontally within the container */
+            gap: 15px;              /* Space between stacked buttons */
+        }
+
+        .button-row {
+            display: flex; /* Arrange buttons horizontally within a row */
+            gap: 20px;     /* Space between buttons in the same row */
+            justify-content: center; /* Center buttons within the row */
+            width: 100%; /* Ensure row takes full width to center its content */
+        }
+
+        .button {
+            background-color: #fff;
+            color: #B87333; /* Copper Color */
+            padding: 15px 30px;
+            font-size: 1.2em;
+            border: none;
+            border-radius: 50px;
+            cursor: pointer;
+            transition: all 0.3s;
+            text-decoration: none; /* For link-styled buttons */
+            display: inline-block; /* Ensure padding works for links */
+            min-width: 200px; /* Give buttons a consistent width */
+            text-align: center;
+        }
+
+        /* Button hover effect */
+        .button:hover {
+            background-color: #B87333;
+            color: white;
+            box-shadow: 0 8px 16px rgba(0, 0, 0, 0.1);
+        }
+
+        /* Removed .admin-button-container styles as it's no longer absolutely positioned */
+
+        /* Footer Style */
+        footer {
+            margin-top: auto; /* Pushes footer to the bottom */
+            font-size: 1.1em;
+            padding-top: 20px; /* Add some padding above footer */
+        }
+    </style>
+</head>
+<body>
+
+<div class="main-content">
+    <h1>Hello from Team ProjectK</h1>
+    <img src="/ProjectKImg.jpg" alt="ProjectK Image">
+
+    <div class="button-container">
+        <div class="button-row">
+            <button class="button" onclick="window.location.href='http://localhost:3000/signup'">Sign up To Kalki World</button>
+            <button class="button" onclick="window.location.href='http://localhost:3000/login'">Log in To Kalki World</button>
+        </div>
+        <div class="button-row">
+            <button class="button" onclick="window.location.href='http://localhost:3000/admin-login'">Admin Login</button>
+        </div>
+    </div>
+</div>
+
+<footer>
+    <p>&copy; 2025 Team ProjectK | All Rights Reserved</p>
+</footer>
+
+</body>
+</html>
