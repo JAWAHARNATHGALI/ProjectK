@@ -74,6 +74,11 @@
 			<artifactId>mysql-connector-java</artifactId> <!-- ✅ Not -j -->
 			<version>8.0.31</version> <!-- ✅ Stable and widely available -->
 		</dependency>
+		<dependency>
+			<groupId>org.springdoc</groupId>
+			<artifactId>springdoc-openapi-starter-webmvc-ui</artifactId>
+			<version>2.2.0</version>
+		</dependency>
 
 
 
