@@ -1,9 +1,8 @@
-// src/Profile.js (UPDATED: Adds Feedback Button and Dialog)
-import React, { useState, useEffect } from 'react';
-import axiosInstance from './axiosInstance'; // Assuming this is your configured axios instance
+import React, { useState, useEffect, useCallback } from 'react';
+import axiosInstance from './axiosInstance';
 import { useNavigate } from 'react-router-dom';
 
-// Material-UI Imports for the Dialog and Rating
+// Material-UI Imports
 import Button from '@mui/material/Button';
 import Dialog from '@mui/material/Dialog';
 import DialogActions from '@mui/material/DialogActions';
@@ -11,61 +10,61 @@ import DialogContent from '@mui/material/DialogContent';
 import DialogContentText from '@mui/material/DialogContentText';
 import DialogTitle from '@mui/material/DialogTitle';
 import TextField from '@mui/material/TextField';
-import Rating from '@mui/material/Rating'; // For star rating
-import Typography from '@mui/material/Typography'; // For rating label
-import Box from '@mui/material/Box'; // For layout within dialog
-import Snackbar from '@mui/material/Snackbar'; // For success/error messages
-import MuiAlert from '@mui/material/Alert'; // For Snackbar content
+import Rating from '@mui/material/Rating';
+import Typography from '@mui/material/Typography';
+import Box from '@mui/material/Box';
+import Snackbar from '@mui/material/Snackbar';
+import MuiAlert from '@mui/material/Alert';
+import MenuItem from '@mui/material/MenuItem';
 
-// Helper for Snackbar
 const Alert = React.forwardRef(function Alert(props, ref) {
     return <MuiAlert elevation={6} ref={ref} variant="filled" {...props} />;
 });
 
-const Profile = ({ user, setUser }) => { // Added setUser prop to potentially update user state
+const Profile = ({ user, setUser }) => {
     const navigate = useNavigate();
-    const [profileUser, setProfileUser] = useState(user); // Use state to manage user data internally
+    const [profileUser, setProfileUser] = useState(user);
     const [openFeedbackDialog, setOpenFeedbackDialog] = useState(false);
-    const [rating, setRating] = useState(3); // Default rating
+    const [rating, setRating] = useState(3);
     const [feedbackContent, setFeedbackContent] = useState('');
     const [snackbarOpen, setSnackbarOpen] = useState(false);
     const [snackbarMessage, setSnackbarMessage] = useState('');
     const [snackbarSeverity, setSnackbarSeverity] = useState('success');
 
-    // Effect to update internal profileUser state if 'user' prop changes (e.g., after login/refresh)
+    const [openUpdateDialog, setOpenUpdateDialog] = useState(false);
+    const [updateEmail, setUpdateEmail] = useState('');
+    const [updateFavoriteCharacter, setUpdateFavoriteCharacter] = useState('');
+
     useEffect(() => {
         if (user) {
             setProfileUser(user);
         }
     }, [user]);
 
-    // Function to fetch profile data (similar to how Dashboard fetches it)
-    const fetchProfileData = async () => {
+    const fetchProfileData = useCallback(async () => {
         try {
             const response = await axiosInstance.get('/api/profile');
             setProfileUser(response.data);
-            if (setUser) { // If setUser prop is provided, update the parent state
+            if (setUser) {
                 setUser(response.data);
             }
         } catch (error) {
             console.error('Error fetching profile data:', error);
-            // Handle token expiration/invalid token (e.g., if token in localStorage is old)
             if (error.response && (error.response.status === 401 || error.response.status === 403)) {
-                localStorage.removeItem('user'); // Clear invalid token
-                navigate('/login'); // Redirect to login page
+                localStorage.removeItem('user');
+                navigate('/login');
             }
             setSnackbarMessage('Failed to load profile data.');
             setSnackbarSeverity('error');
             setSnackbarOpen(true);
         }
-    };
+    }, [navigate, setUser]);
 
     useEffect(() => {
-        // If user prop is not immediately available (e.g., on direct page load), fetch it
         if (!user && localStorage.getItem('user')) {
             fetchProfileData();
         }
-    }, [user]); // Depend on 'user' prop
+    }, [user, fetchProfileData]);
 
     const handleOpenFeedbackDialog = () => {
         setOpenFeedbackDialog(true);
@@ -73,24 +72,22 @@ const Profile = ({ user, setUser }) => { // Added setUser prop to potentially up
 
     const handleCloseFeedbackDialog = () => {
         setOpenFeedbackDialog(false);
-        setRating(3); // Reset rating
-        setFeedbackContent(''); // Reset feedback content
+        setRating(3);
+        setFeedbackContent('');
     };
 
     const handleSubmitFeedback = async () => {
         try {
-            const response = await axiosInstance.post('/api/user/feedback', {
-                rating: rating,
+            await axiosInstance.post('/api/user/feedback', {
+                rating,
                 feedback: feedbackContent,
             });
-            console.log('Feedback submitted:', response.data);
             setSnackbarMessage('Feedback submitted successfully!');
             setSnackbarSeverity('success');
             setSnackbarOpen(true);
-            handleCloseFeedbackDialog(); // Close dialog on success
+            handleCloseFeedbackDialog();
         } catch (error) {
-            console.error('Error submitting feedback:', error.response ? error.response.data : error.message);
-            const errorMessage = error.response && error.response.data ? error.response.data : 'Failed to submit feedback.';
+            const errorMessage = error.response?.data || 'Failed to submit feedback.';
             setSnackbarMessage(errorMessage);
             setSnackbarSeverity('error');
             setSnackbarOpen(true);
@@ -98,50 +95,77 @@ const Profile = ({ user, setUser }) => { // Added setUser prop to potentially up
     };
 
     const handleSnackbarClose = (event, reason) => {
-        if (reason === 'clickaway') {
-            return;
-        }
+        if (reason === 'clickaway') return;
         setSnackbarOpen(false);
     };
 
+    const handleOpenUpdateDialog = () => {
+        if (profileUser) {
+            setUpdateEmail(profileUser.email || '');
+            setUpdateFavoriteCharacter(profileUser.favoriteCharacter || '');
+        }
+        setOpenUpdateDialog(true);
+    };
+
+    const handleSubmitUpdate = async () => {
+        try {
+            await axiosInstance.put('/api/profile', {
+                email: updateEmail,
+                favoriteCharacter: updateFavoriteCharacter
+            });
+            setSnackbarMessage('Profile updated successfully!');
+            setSnackbarSeverity('success');
+            setSnackbarOpen(true);
+            setOpenUpdateDialog(false);
+            fetchProfileData();
+        } catch (error) {
+            setSnackbarMessage('Failed to update profile.');
+            setSnackbarSeverity('error');
+            setSnackbarOpen(true);
+        }
+    };
+
     return (
-        <div style={{ padding: '20px', position: 'relative' }}> {/* Added relative positioning */}
+        <div style={{ padding: '20px', position: 'relative' }}>
             <h2 style={{ color: '#A0522D', marginBottom: '15px' }}>User Profile</h2>
             {profileUser ? (
                 <div style={{ backgroundColor: '#f9f9f9', padding: '15px', borderRadius: '8px', boxShadow: '0 2px 4px rgba(0,0,0,0.1)' }}>
-                    <p style={{ lineHeight: '1.6', marginBottom: '10px' }}>
-                        <strong>Name:</strong> {profileUser.name || 'N/A'}
-                    </p>
-                    <p style={{ lineHeight: '1.6', marginBottom: '10px' }}>
-                        <strong>Email:</strong> {profileUser.email || 'N/A'}
-                    </p>
-                    <p style={{ lineHeight: '1.6', marginBottom: '10px' }}>
-                        <strong>Favorite Character:</strong> {profileUser.favoriteCharacter || 'N/A'}
-                    </p>
-                    {/* Add more profile information as needed */}
+                    <p><strong>Name:</strong> {profileUser.name || 'N/A'}</p>
+                    <p><strong>Email:</strong> {profileUser.email || 'N/A'}</p>
+                    <p><strong>Favorite Character:</strong> {profileUser.favoriteCharacter || 'N/A'}</p>
                 </div>
             ) : (
                 <p style={{ color: 'red' }}>No profile information available. Please log in.</p>
             )}
 
-            {/* Feedback Button - Positioned in the rightmost corner */}
             <Button
                 variant="contained"
                 sx={{
                     backgroundColor: '#A0522D',
-                    '&:hover': {
-                        backgroundColor: '#8B4513',
-                    },
-                    position: 'absolute', // Absolute positioning
-                    top: '20px', // Adjust as needed
-                    right: '20px', // Rightmost corner
+                    '&:hover': { backgroundColor: '#8B4513' },
+                    position: 'absolute',
+                    top: '20px',
+                    right: '20px'
                 }}
                 onClick={handleOpenFeedbackDialog}
             >
                 Give Feedback
             </Button>
 
-            {/* Feedback Dialog */}
+            <Button
+                variant="contained"
+                sx={{
+                    backgroundColor: '#A0522D',
+                    '&:hover': { backgroundColor: '#8B4513' },
+                    position: 'absolute',
+                    bottom: '20px',
+                    right: '20px'
+                }}
+                onClick={handleOpenUpdateDialog}
+            >
+                Update Profile
+            </Button>
+
             <Dialog open={openFeedbackDialog} onClose={handleCloseFeedbackDialog}>
                 <DialogTitle sx={{ backgroundColor: '#A0522D', color: 'white' }}>Give Us Your Feedback</DialogTitle>
                 <DialogContent>
@@ -153,17 +177,14 @@ const Profile = ({ user, setUser }) => { // Added setUser prop to potentially up
                         <Rating
                             name="feedback-rating"
                             value={rating}
-                            onChange={(event, newValue) => {
-                                setRating(newValue);
-                            }}
-                            precision={1} // Allow integer ratings (1, 2, 3, 4, 5)
+                            onChange={(event, newValue) => setRating(newValue)}
+                            precision={1}
                             size="large"
                         />
                     </Box>
                     <TextField
                         autoFocus
                         margin="dense"
-                        id="feedback"
                         label="Your Feedback"
                         type="text"
                         fullWidth
@@ -180,7 +201,40 @@ const Profile = ({ user, setUser }) => { // Added setUser prop to potentially up
                 </DialogActions>
             </Dialog>
 
-            {/* Snackbar for messages */}
+            <Dialog open={openUpdateDialog} onClose={() => setOpenUpdateDialog(false)}>
+                <DialogTitle sx={{ backgroundColor: '#A0522D', color: 'white' }}>Update Profile</DialogTitle>
+                <DialogContent sx={{ px: 4, pt: 3, pb: 2 }}> {/* More spacing above */}
+                    <Box sx={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
+                        <TextField
+                            label="Email"
+                            type="email"
+                            fullWidth
+                            value={updateEmail}
+                            onChange={(e) => setUpdateEmail(e.target.value)}
+                        />
+                        <TextField
+                            select
+                            label="Favorite Character"
+                            fullWidth
+                            value={updateFavoriteCharacter}
+                            onChange={(e) => setUpdateFavoriteCharacter(e.target.value)}
+                        >
+                            <MenuItem value="">Select</MenuItem>
+                            <MenuItem value="Kalki">Kalki</MenuItem>
+                            <MenuItem value="Karna">Karna</MenuItem>
+                            <MenuItem value="Ashwatthama">Ashwatthama</MenuItem>
+                            <MenuItem value="Parasuram">Parasuram</MenuItem>
+                        </TextField>
+                    </Box>
+                </DialogContent>
+                <DialogActions>
+                    <Button onClick={() => setOpenUpdateDialog(false)} sx={{ color: '#A0522D' }}>Cancel</Button>
+                    <Button onClick={handleSubmitUpdate} variant="contained" sx={{ backgroundColor: '#A0522D', '&:hover': { backgroundColor: '#8B4513' } }}>
+                        Update
+                    </Button>
+                </DialogActions>
+            </Dialog>
+
             <Snackbar open={snackbarOpen} autoHideDuration={6000} onClose={handleSnackbarClose}>
                 <Alert onClose={handleSnackbarClose} severity={snackbarSeverity} sx={{ width: '100%' }}>
                     {snackbarMessage}

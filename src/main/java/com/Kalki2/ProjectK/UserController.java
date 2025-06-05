@@ -101,6 +101,44 @@ public class UserController {
         }
     }
 
+    @PutMapping("/profile")
+    public ResponseEntity<?> updateProfile(@RequestBody Map<String, String> updates) {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        if (authentication == null || !authentication.isAuthenticated()) {
+            return ResponseEntity.status(401).body("Not authenticated.");
+        }
+
+        String userEmail = authentication.getName(); // Email from JWT
+        AppUser user = userRepository.findByEmail(userEmail);
+
+        if (user == null) {
+            return ResponseEntity.status(404).body("User not found.");
+        }
+
+        // Extract updated values from request
+        String newEmail = updates.get("email");
+        String newCharacter = updates.get("favoriteCharacter");
+
+        // Apply updates only if they’re not null/blank
+        if (newEmail != null && !newEmail.trim().isEmpty()) {
+            user.setEmail(newEmail.trim());
+        }
+        if (newCharacter != null && !newCharacter.trim().isEmpty()) {
+            user.setFavoriteCharacter(newCharacter.trim());
+        }
+
+        userRepository.save(user); // Save changes
+
+        // Return updated profile
+        Map<String, String> updatedProfile = new HashMap<>();
+        updatedProfile.put("name", user.getName());
+        updatedProfile.put("email", user.getEmail());
+        updatedProfile.put("gender", user.getGender());
+        updatedProfile.put("favoriteCharacter", user.getFavoriteCharacter());
+
+        return ResponseEntity.ok(updatedProfile);
+    }
+
     @GetMapping("/home")
     public ResponseEntity<String> getHome() {
         return ResponseEntity.ok("Access granted to protected home route!");
